@@ -1,0 +1,1 @@
+Scripts to make a timelapse with MJPEG cameras.
