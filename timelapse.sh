@@ -1,7 +1,7 @@
 #/bin/bash
 
-if [ $# -ne 5 ]; then
-echo "USAGE $0 videoname sleeptime nbframes cameraName1,cameraName2,... url1,url2,..."
+if [ $# -ne 4 ]; then
+echo "USAGE $0 outdir url sleeptime nbframes"
 echo "    sleeptime est au format de la commande sleep 1s, 3m, ..."
 echo "    pour un nombre illimite de frames, mettre un nombre negatif"
 exit 1;
@@ -12,46 +12,26 @@ suffix=
 extension=jpg
 
 # Recuperation des parametres
-VIDEONAME=$1
-SLEEPTIME=$2
-NBFRAMES=$3
-OLDIFS=$IFS
-IFS=,
-CAMERAS=($4)
-URLS=($5)
-IFS=$OLDIFS
-
-# Verification des parametres
-cameraNumber=${#CAMERAS[@]}
-urlNumber=${#URLS[@]}
-if [ $cameraNumber -ne $urlNumber ]; then
-
-echo "Le nombre de camera($cameraNumber) doit correspondre au nombre d'URL($urlNumber)."
-exit 1;
-fi
+BASEDIR=$1
+SLEEPTIME=$3
+NBFRAMES=$4
+URL=$2
 
 # Gestion des dossier de sortie et de log
-OUTPUTDIR=./$VIDEONAME/data
-LOGDIR=./$VIDEONAME/log
-
+OUTPUTDIR=$BASEDIR/data
+mkdir -p $OUTPUTDIR
+LOGDIR=$BASEDIR/log
 mkdir -p $LOGDIR
-for i in ${CAMERAS[@]}; do
-  mkdir -p $OUTPUTDIR/$i
-done
 
-# init des index de depart pour chaque camera
-for i in ${!CAMERAS[@]}; do
-  touch $OUTPUTDIR/${CAMERAS[$i]}/${prefix}0$suffix.$extension
-  index[$i]=$((`ls -1 -v $OUTPUTDIR/${CAMERAS[$i]} | grep "${prefix}[0-9][0-9]*$suffix\.$extension" | tail -n 1 | sed -e "s/${prefix}\([0-9][0-9]*\)$suffix\.$extension/\1/"`+1))
-  rm -f $OUTPUTDIR/${CAMERAS[$i]}/${prefix}0$suffix.$extension
-done
+# init de l'index de depart
+touch $OUTPUTDIR/${prefix}0$suffix.$extension
+index=$((`ls -1 -v $OUTPUTDIR | grep "${prefix}[0-9][0-9]*$suffix\.$extension" | tail -n 1 | sed -e "s/${prefix}\([0-9][0-9]*\)$suffix\.$extension/\1/"`+1))
+rm -f $OUTPUTDIR/${prefix}0$suffix.$extension
 
-# acquisition des frames pour chaque camera
+# acquisition des frames
 while [ $NBFRAMES -ne 0 ]; do
-  for i in ${!CAMERAS[@]}; do
-    wget --background --append-output $LOGDIR/${CAMERAS[$i]}.log --output-document $OUTPUTDIR/${CAMERAS[$i]}/$prefix`printf "%06.f" "${index[$i]}"`$suffix.$extension ${URLS[$i]}
-    index[$i]=$((${index[$i]}+1))
-  done
+  wget --background --append-output $LOGDIR/http.log --output-document $OUTPUTDIR/$prefix`printf "%06.f" "$index"`$suffix.$extension $URL
+  index=$(($index+1))
 
   #  on decompte le nombre de frames et on s'endort suivant le rythme demande
   NBFRAMES=$(($NBFRAMES-1))
