@@ -25,13 +25,13 @@ mkdir -p $LOGDIR
 
 # init de l'index de depart
 touch $OUTPUTDIR/${prefix}0$suffix.$extension
-index=$((`ls -1 -v $OUTPUTDIR | grep "${prefix}[0-9][0-9]*$suffix\.$extension" | tail -n 1 | sed -e "s/${prefix}\([0-9][0-9]*\)$suffix\.$extension/\1/"`+1))
+index=$((`ls -1 -v $OUTPUTDIR | grep "${prefix}[0-9][0-9]*$suffix\.$extension" | tail -n 1 | sed -e "s/${prefix}0*\([1-9][0-9]*\)$suffix\.$extension/\1/"` + 1))
 rm -f $OUTPUTDIR/${prefix}0$suffix.$extension
 
 # acquisition des frames
 while [ $NBFRAMES -ne 0 ]; do
   wget --background --append-output $LOGDIR/http.log --output-document $OUTPUTDIR/$prefix`printf "%06.f" "$index"`$suffix.$extension $URL
-  index=$(($index+1))
+  index=$(($index + 1))
 
   #  on decompte le nombre de frames et on s'endort suivant le rythme demande
   NBFRAMES=$(($NBFRAMES-1))
